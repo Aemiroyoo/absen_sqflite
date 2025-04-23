@@ -5,16 +5,16 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   void _login(BuildContext context) async {
-    final username = usernameController.text.trim();
+    final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
-    final user = await DBHelper.getUser(username, password);
+    final user = await DBHelper.getUser(email, password);
     if (user != null) {
-      await PrefService.saveLogin(username); // simpan login
+      await PrefService.saveLogin(user.email, user.name); // simpan login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => HomeScreen()),
@@ -35,8 +35,8 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           children: [
             TextField(
-              controller: usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
+              controller: emailController,
+              decoration: InputDecoration(labelText: 'Email'),
             ),
             TextField(
               controller: passwordController,

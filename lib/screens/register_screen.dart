@@ -4,17 +4,38 @@ import '../models/user_model.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatelessWidget {
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  // ✅ Fungsi validasi email
+  bool isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
   void _register(BuildContext context) async {
-    String username = usernameController.text.trim();
+    String name = nameController.text.trim();
+    String email = emailController.text.trim();
     String password = passwordController.text.trim();
 
-    if (username.isNotEmpty && password.isNotEmpty) {
+    // if (!isValidEmail(email)) {
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text('Format email tidak valid.')));
+    //   return;
+    // }
+
+    // if (password.length < 7) {
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text('Password minimal 7 karakter.')));
+    //   return;
+    // }
+
+    if (email.isNotEmpty && password.isNotEmpty) {
       try {
         await DBHelper.insertUser(
-          UserModel(username: username, password: password),
+          UserModel(name: name, email: email, password: password),
         );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Register berhasil! Silakan login.')),
@@ -26,7 +47,7 @@ class RegisterScreen extends StatelessWidget {
       } catch (e) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Username sudah terdaftar.')));
+        ).showSnackBar(SnackBar(content: Text('Email sudah terdaftar.')));
       }
     } else {
       ScaffoldMessenger.of(
@@ -44,8 +65,16 @@ class RegisterScreen extends StatelessWidget {
         child: Column(
           children: [
             TextField(
-              controller: usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: 'Nama Lengkap',
+                // hintText: 'Dimas Pratama',
+              ),
+            ),
+            // SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              decoration: InputDecoration(labelText: 'Email'),
             ),
             TextField(
               controller: passwordController,
@@ -53,9 +82,48 @@ class RegisterScreen extends StatelessWidget {
               obscureText: true,
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _register(context),
-              child: Text('Register'),
+            TextButton(
+              onPressed: () async {
+                String name = nameController.text.trim();
+                String email = emailController.text.trim();
+                String password = passwordController.text.trim();
+
+                if (name.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Nama tidak boleh kosong.')),
+                  );
+                  return;
+                }
+
+                if (!isValidEmail(email)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Format email tidak valid.')),
+                  );
+                  return;
+                }
+
+                if (password.length < 7) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Password minimal 7 karakter.')),
+                  );
+                  return;
+                }
+
+                await DBHelper.insertUser(
+                  UserModel(name: name, email: email, password: password),
+                );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Pendaftaran berhasil!')),
+                );
+
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => LoginScreen()),
+                );
+              },
+
+              child: Text("Daftar"),
             ),
           ],
         ),

@@ -31,9 +31,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
+  geolocator: ^14.0.0
+  google_maps_flutter: ^2.12.1
   intl: ^0.20.2
   path: ^1.9.1
   path_provider: ^2.1.5
+  permission_handler: ^12.0.0+1
   shared_preferences: ^2.5.3
   sqflite: ^2.4.2
 

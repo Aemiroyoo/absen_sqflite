@@ -3,7 +3,8 @@ class Attendance {
   String type;
   String date;
   String time;
-  String? reason; // Tambahan
+  String? reason;
+  String userEmail; // ⬅️ Tambahan
 
   Attendance({
     this.id,
@@ -11,6 +12,7 @@ class Attendance {
     required this.date,
     required this.time,
     this.reason,
+    required this.userEmail,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class Attendance {
       'date': date,
       'time': time,
       'reason': reason,
+      'user_email': userEmail,
     };
   }
 
@@ -30,6 +33,7 @@ class Attendance {
       date: map['date'],
       time: map['time'],
       reason: map['reason'],
+      userEmail: map['user_email'],
     );
   }
 }

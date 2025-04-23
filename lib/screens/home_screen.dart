@@ -12,6 +12,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String? userName;
   String? _absenMasukTime;
   String? _absenKeluarTime;
   String _statusHarian = 'Loading status...';
@@ -21,12 +22,21 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // DBHelper.deleteDb(); // panggil sekali saja di awal
     _loadTodayAttendance();
+    _loadUserName();
+  }
+
+  void _loadUserName() async {
+    final name = await PrefService.getName();
+    setState(() {
+      userName = name;
+    });
   }
 
   Future<void> _absenIzin(BuildContext context, String reason) async {
     final now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now); // <-- FIXED
     String formattedTime = DateFormat('HH:mm:ss').format(now);
+    final email = await PrefService.getEmail();
 
     final db = await DBHelper.initDb();
 
@@ -66,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
       date: formattedDate,
       time: formattedTime,
       reason: reason,
+      userEmail: email!,
     );
     await DBHelper.insertAttendance(att);
 
@@ -80,14 +91,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadTodayAttendance() async {
+    final email = await PrefService.getEmail();
     final now = DateTime.now();
     String today = DateFormat('yyyy-MM-dd').format(now);
 
     final db = await DBHelper.initDb();
     final result = await db.query(
       'attendance',
-      where: 'date = ?',
-      whereArgs: [today],
+      where: 'date = ? AND user_email = ?',
+      whereArgs: [today, email],
     );
 
     String? masuk;
@@ -125,20 +137,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
     String formattedTime = DateFormat('HH:mm:ss').format(now);
+    final email = await PrefService.getEmail();
 
     final db = await DBHelper.initDb();
 
-    // Ambil semua absen hari ini
     final todayAttendance = await db.query(
       'attendance',
-      where: 'date = ?',
-      whereArgs: [formattedDate],
+      where: 'date = ? AND user_email = ?',
+      whereArgs: [formattedDate, email],
     );
 
     bool hasMasuk = todayAttendance.any((att) => att['type'] == 'Masuk');
     bool hasIzin = todayAttendance.any((att) => att['type'] == 'Izin');
+    bool alreadyThisType = todayAttendance.any((att) => att['type'] == type);
 
-    // Validasi
     if (type == 'Masuk' && hasIzin) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -151,76 +163,70 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    if (type == 'Keluar') {
-      if (!hasMasuk) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '⚠️ Anda belum Absen Masuk hari ini. Tidak bisa Absen Keluar.',
-            ),
-            backgroundColor: Colors.red,
+    if (type == 'Keluar' && !hasMasuk) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '⚠️ Anda belum Absen Masuk hari ini. Tidak bisa Absen Keluar.',
           ),
-        );
-        return;
-      }
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
 
-    // Validasi jam kerja
     final currentHour = now.hour;
-
-    if (type == 'Masuk') {
-      if (currentHour < 6 || currentHour >= 12) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '⚠️ Absen Masuk hanya bisa antara jam 06:00 sampai 12:00.',
-            ),
-            backgroundColor: Colors.red,
+    if (type == 'Masuk' && (currentHour < 6 || currentHour >= 14)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '⚠️ Absen Masuk hanya bisa antara jam 06:00 sampai 12:00.',
           ),
-        );
-        return;
-      }
-    } else if (type == 'Keluar') {
-      if (currentHour < 12 || currentHour >= 24) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '⚠️ Absen Keluar hanya bisa antara jam 12:00 sampai 23:59.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
 
-    // Cek apakah sudah absen type sama
-    final existing = await DBHelper.checkAttendance(formattedDate, type);
+    if (type == 'Keluar' && (currentHour < 12 || currentHour >= 24)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '⚠️ Absen Keluar hanya bisa antara jam 12:00 sampai 23:59.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    if (existing) {
+    if (alreadyThisType) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('⚠️ Anda sudah absen $type hari ini.'),
           backgroundColor: Colors.red,
         ),
       );
-    } else {
-      Attendance att = Attendance(
-        type: type,
-        date: formattedDate,
-        time: formattedTime,
-      );
-      await DBHelper.insertAttendance(att);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('✅ Berhasil Absen $type pada $formattedTime'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      _loadTodayAttendance();
+      return;
     }
+
+    Attendance att = Attendance(
+      type: type,
+      date: formattedDate,
+      time: formattedTime,
+      userEmail: email!,
+    );
+
+    await DBHelper.insertAttendance(att);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ Berhasil Absen $type pada $formattedTime'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    _loadTodayAttendance();
   }
 
   void _showIzinDialog(BuildContext context) {
@@ -281,60 +287,117 @@ class _HomeScreenState extends State<HomeScreen> {
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Absensi Hari Ini',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8),
                     Center(
                       child: Text(
-                        DateFormat(
-                          'EEEE, dd MMMM yyyy',
-                        ).format(DateTime.now()), // <- Tambahan
+                        '🗓️ Absensi Hari Ini',
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     SizedBox(height: 12),
-                    Text(
-                      _statusHarian,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
+                    Center(
+                      child: Text(
+                        'Halo, ${userName ?? "User"} 👋',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                    SizedBox(height: 16),
-
+                    SizedBox(height: 4),
+                    Center(
+                      child: Text(
+                        DateFormat('EEEE, dd MMMM yyyy').format(DateTime.now()),
+                        style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        _statusHarian,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                    ),
+                    Divider(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Masuk:', style: TextStyle(fontSize: 16)),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.login,
+                              color:
+                                  _absenMasukTime != null
+                                      ? Colors.green
+                                      : Colors.grey,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Masuk:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                         Text(
                           _absenMasukTime ?? 'Belum Absen',
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color:
+                                _absenMasukTime != null
+                                    ? Colors.black
+                                    : Colors.grey,
+                          ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Keluar:', style: TextStyle(fontSize: 16)),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.logout,
+                              color:
+                                  _absenKeluarTime != null
+                                      ? Colors.green
+                                      : Colors.grey,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Keluar:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                         Text(
                           _absenKeluarTime ?? 'Belum Absen',
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color:
+                                _absenKeluarTime != null
+                                    ? Colors.black
+                                    : Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -342,6 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+
             SizedBox(height: 24),
             // Menu Grid
             Expanded(
@@ -378,14 +442,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     },
                   ),
-                  _buildMenuCard(
-                    context,
-                    icon: Icons.assignment_turned_in,
-                    label: 'Absen Izin',
-                    color: Colors.blueGrey,
-                    onTap: () => _showIzinDialog(context),
-                  ),
 
+                  // _buildMenuCard(
+                  //   context,
+                  //   icon: Icons.assignment_turned_in,
+                  //   label: 'Absen Izin',
+                  //   color: Colors.blueGrey,
+                  //   onTap: () => _showIzinDialog(context),
+                  // ),
                   _buildMenuCard(
                     context,
                     icon: Icons.exit_to_app,

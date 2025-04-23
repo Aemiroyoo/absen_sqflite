@@ -13,29 +13,51 @@ class DBHelper {
     String path = join(await getDatabasesPath(), 'attendance.db');
     _db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
-        // Membuat tabel attendance
         await db.execute('''
-          CREATE TABLE attendance(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT,
-            date TEXT,
-            time TEXT,
-            reason TEXT
-          )
-        ''');
-
-        // Membuat tabel users
+      CREATE TABLE attendance(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT,
+        date TEXT,
+        time TEXT,
+        reason TEXT,
+        user_email TEXT
+      )
+    ''');
         await db.execute('''
-          CREATE TABLE users(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
-          )
-        ''');
+      CREATE TABLE users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        email TEXT UNIQUE,
+        password TEXT
+      )
+    ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        await db.execute('DROP TABLE IF EXISTS attendance');
+        await db.execute('DROP TABLE IF EXISTS users');
+        await db.execute('''
+      CREATE TABLE attendance(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT,
+        date TEXT,
+        time TEXT,
+        reason TEXT,
+        user_email TEXT
+      )
+    ''');
+        await db.execute('''
+      CREATE TABLE users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        email TEXT UNIQUE,
+        password TEXT
+      )
+    ''');
       },
     );
+
     return _db!;
   }
 
@@ -50,12 +72,14 @@ class DBHelper {
   }
 
   // Get All Attendance
-  static Future<List<Attendance>> getAllAttendance() async {
+  static Future<List<Attendance>> getAllAttendanceByEmail(String email) async {
     final db = await initDb();
-    final List<Map<String, dynamic>> maps = await db.query('attendance');
-    return List.generate(maps.length, (i) {
-      return Attendance.fromMap(maps[i]);
-    });
+    final result = await db.query(
+      'attendance',
+      where: 'user_email = ?',
+      whereArgs: [email],
+    );
+    return result.map((e) => Attendance.fromMap(e)).toList();
   }
 
   // Delete Attendance by id
@@ -74,13 +98,12 @@ class DBHelper {
     return await db.insert('users', user.toMap());
   }
 
-  // Get User (Login)
-  static Future<UserModel?> getUser(String username, String password) async {
+  static Future<UserModel?> getUser(String email, String password) async {
     final db = await initDb();
     final result = await db.query(
       'users',
-      where: 'username = ? AND password = ?',
-      whereArgs: [username, password],
+      where: 'email = ? AND password = ?',
+      whereArgs: [email, password],
     );
     if (result.isNotEmpty) {
       return UserModel.fromMap(result.first);

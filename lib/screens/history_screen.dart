@@ -1,3 +1,4 @@
+import 'package:absen_sqflite/services/pref_services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../database/db_helper.dart';
@@ -28,7 +29,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _loadAttendance() async {
-    _listAttendance = await DBHelper.getAllAttendance();
+    final email = await PrefService.getEmail(); // ambil email user yang login
+    if (email == null) return;
+
+    _listAttendance = await DBHelper.getAllAttendanceByEmail(
+      email,
+    ); // kirim email ke sini
 
     // Grouping data by date
     _groupedAttendance.clear();
