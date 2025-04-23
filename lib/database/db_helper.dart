@@ -13,7 +13,7 @@ class DBHelper {
     String path = join(await getDatabasesPath(), 'attendance.db');
     _db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
       CREATE TABLE attendance(
@@ -22,7 +22,8 @@ class DBHelper {
         date TEXT,
         time TEXT,
         reason TEXT,
-        user_email TEXT
+        user_email TEXT,
+        address TEXT
       )
     ''');
         await db.execute('''
@@ -44,7 +45,8 @@ class DBHelper {
         date TEXT,
         time TEXT,
         reason TEXT,
-        user_email TEXT
+        user_email TEXT,
+        address TEXT
       )
     ''');
         await db.execute('''

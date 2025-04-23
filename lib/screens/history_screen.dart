@@ -129,14 +129,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           SizedBox(height: 4),
-                                          // Text('Tanggal: ${att.date}'),
-                                          Text(
-                                            'Jam: ${att.time}',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black,
+                                          Text('Jam: ${att.time}'),
+                                          if (att.address != null &&
+                                              att.address!.isNotEmpty) ...[
+                                            SizedBox(height: 4),
+                                            Text(
+                                              'Lokasi: ${att.address}',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.black87,
+                                              ),
                                             ),
-                                          ),
+                                          ],
                                           if (att.type == 'Izin' &&
                                               att.reason != null) ...[
                                             SizedBox(height: 4),
@@ -144,6 +148,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           ],
                                         ],
                                       ),
+
                                       trailing: IconButton(
                                         icon: Icon(
                                           Icons.delete,

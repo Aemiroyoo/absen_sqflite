@@ -1,3 +1,4 @@
+import 'package:absen_sqflite/services/absen_services.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -60,49 +61,49 @@ class _AbsenMasukLokasiScreenState extends State<AbsenMasukLokasiScreen> {
     });
   }
 
-  Future<void> _absenMasuk() async {
-    final email = await PrefService.getEmail();
-    final now = DateTime.now();
-    String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-    String formattedTime = DateFormat('HH:mm:ss').format(now);
+  // Future<void> _absenMasuk() async {
+  //   final email = await PrefService.getEmail();
+  //   final now = DateTime.now();
+  //   String formattedDate = DateFormat('yyyy-MM-dd').format(now);
+  //   String formattedTime = DateFormat('HH:mm:ss').format(now);
 
-    final db = await DBHelper.initDb();
+  //   final db = await DBHelper.initDb();
 
-    // ✅ CEK apakah sudah absen Masuk hari ini
-    final check = await db.query(
-      'attendance',
-      where: 'date = ? AND type = ? AND user_email = ?',
-      whereArgs: [formattedDate, 'Masuk', email],
-    );
+  //   // ✅ CEK apakah sudah absen Masuk hari ini
+  //   final check = await db.query(
+  //     'attendance',
+  //     where: 'date = ? AND type = ? AND user_email = ?',
+  //     whereArgs: [formattedDate, 'Masuk', email],
+  //   );
 
-    if (check.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('⚠️ Anda sudah absen Masuk hari ini.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+  //   if (check.isNotEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('⚠️ Anda sudah absen Masuk hari ini.'),
+  //         backgroundColor: Colors.orange,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    Attendance att = Attendance(
-      type: 'Masuk',
-      date: formattedDate,
-      time: formattedTime,
-      userEmail: email!,
-    );
+  //   Attendance att = Attendance(
+  //     type: 'Masuk',
+  //     date: formattedDate,
+  //     time: formattedTime,
+  //     userEmail: email!,
+  //   );
 
-    await DBHelper.insertAttendance(att);
+  //   await DBHelper.insertAttendance(att);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✅ Berhasil absen Masuk berdasarkan lokasi!'),
-        backgroundColor: Colors.green,
-      ),
-    );
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(
+  //       content: Text('✅ Berhasil absen Masuk berdasarkan lokasi!'),
+  //       backgroundColor: Colors.green,
+  //     ),
+  //   );
 
-    Navigator.pop(context); // kembali ke Home
-  }
+  //   Navigator.pop(context); // kembali ke Home
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +172,14 @@ class _AbsenMasukLokasiScreenState extends State<AbsenMasukLokasiScreen> {
                         ElevatedButton.icon(
                           icon: const Icon(Icons.check_circle),
                           label: const Text('Absen Sekarang'),
-                          onPressed: isInsideRadius ? _absenMasuk : null,
+                          onPressed:
+                              isInsideRadius
+                                  ? () async {
+                                    await AbsenServices.absenMasuk(context);
+                                    if (context.mounted) Navigator.pop(context);
+                                  }
+                                  : null,
+
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size.fromHeight(50),
                           ),
