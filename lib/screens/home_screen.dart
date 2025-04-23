@@ -1,8 +1,11 @@
+import 'package:absen_sqflite/screens/absen_keluar_lokasi_screen.dart';
+import 'package:absen_sqflite/screens/absen_masuk_lokasi_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../database/db_helper.dart';
 import '../models/attendance_model.dart';
 import '../services/pref_services.dart';
+import '../services/absen_services.dart';
 import 'history_screen.dart';
 import 'login_screen.dart';
 
@@ -32,63 +35,63 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _absenIzin(BuildContext context, String reason) async {
-    final now = DateTime.now();
-    String formattedDate = DateFormat('yyyy-MM-dd').format(now); // <-- FIXED
-    String formattedTime = DateFormat('HH:mm:ss').format(now);
-    final email = await PrefService.getEmail();
+  // Future<void> _absenIzin(BuildContext context, String reason) async {
+  //   final now = DateTime.now();
+  //   String formattedDate = DateFormat('yyyy-MM-dd').format(now); // <-- FIXED
+  //   String formattedTime = DateFormat('HH:mm:ss').format(now);
+  //   final email = await PrefService.getEmail();
 
-    final db = await DBHelper.initDb();
+  //   final db = await DBHelper.initDb();
 
-    final todayAttendance = await db.query(
-      'attendance',
-      where: 'date = ?',
-      whereArgs: [formattedDate],
-    );
+  //   final todayAttendance = await db.query(
+  //     'attendance',
+  //     where: 'date = ?',
+  //     whereArgs: [formattedDate],
+  //   );
 
-    bool hasMasuk = todayAttendance.any((att) => att['type'] == 'Masuk');
-    bool hasIzin = todayAttendance.any((att) => att['type'] == 'Izin');
+  //   bool hasMasuk = todayAttendance.any((att) => att['type'] == 'Masuk');
+  //   bool hasIzin = todayAttendance.any((att) => att['type'] == 'Izin');
 
-    if (hasMasuk) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '⚠️ Anda sudah Absen Masuk hari ini. Tidak bisa mengajukan Izin.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  //   if (hasMasuk) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text(
+  //           '⚠️ Anda sudah Absen Masuk hari ini. Tidak bisa mengajukan Izin.',
+  //         ),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    if (hasIzin) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('⚠️ Anda sudah mengajukan Izin hari ini.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  //   if (hasIzin) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('⚠️ Anda sudah mengajukan Izin hari ini.'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    Attendance att = Attendance(
-      type: 'Izin',
-      date: formattedDate,
-      time: formattedTime,
-      reason: reason,
-      userEmail: email!,
-    );
-    await DBHelper.insertAttendance(att);
+  //   Attendance att = Attendance(
+  //     type: 'Izin',
+  //     date: formattedDate,
+  //     time: formattedTime,
+  //     reason: reason,
+  //     userEmail: email!,
+  //   );
+  //   await DBHelper.insertAttendance(att);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✅ Berhasil mengajukan Izin pada $formattedTime'),
-        backgroundColor: Colors.green,
-      ),
-    );
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text('✅ Berhasil mengajukan Izin pada $formattedTime'),
+  //       backgroundColor: Colors.green,
+  //     ),
+  //   );
 
-    _loadTodayAttendance();
-  }
+  //   _loadTodayAttendance();
+  // }
 
   void _loadTodayAttendance() async {
     final email = await PrefService.getEmail();
@@ -133,138 +136,138 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _absen(BuildContext context, String type) async {
-    final now = DateTime.now();
-    String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-    String formattedTime = DateFormat('HH:mm:ss').format(now);
-    final email = await PrefService.getEmail();
+  // void _absen(BuildContext context, String type) async {
+  //   final now = DateTime.now();
+  //   String formattedDate = DateFormat('yyyy-MM-dd').format(now);
+  //   String formattedTime = DateFormat('HH:mm:ss').format(now);
+  //   final email = await PrefService.getEmail();
 
-    final db = await DBHelper.initDb();
+  //   final db = await DBHelper.initDb();
 
-    final todayAttendance = await db.query(
-      'attendance',
-      where: 'date = ? AND user_email = ?',
-      whereArgs: [formattedDate, email],
-    );
+  //   final todayAttendance = await db.query(
+  //     'attendance',
+  //     where: 'date = ? AND user_email = ?',
+  //     whereArgs: [formattedDate, email],
+  //   );
 
-    bool hasMasuk = todayAttendance.any((att) => att['type'] == 'Masuk');
-    bool hasIzin = todayAttendance.any((att) => att['type'] == 'Izin');
-    bool alreadyThisType = todayAttendance.any((att) => att['type'] == type);
+  //   bool hasMasuk = todayAttendance.any((att) => att['type'] == 'Masuk');
+  //   bool hasIzin = todayAttendance.any((att) => att['type'] == 'Izin');
+  //   bool alreadyThisType = todayAttendance.any((att) => att['type'] == type);
 
-    if (type == 'Masuk' && hasIzin) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '⚠️ Anda sudah mengajukan Izin hari ini. Tidak bisa Absen Masuk.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  //   if (type == 'Masuk' && hasIzin) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text(
+  //           '⚠️ Anda sudah mengajukan Izin hari ini. Tidak bisa Absen Masuk.',
+  //         ),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    if (type == 'Keluar' && !hasMasuk) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '⚠️ Anda belum Absen Masuk hari ini. Tidak bisa Absen Keluar.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  //   if (type == 'Keluar' && !hasMasuk) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text(
+  //           '⚠️ Anda belum Absen Masuk hari ini. Tidak bisa Absen Keluar.',
+  //         ),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    final currentHour = now.hour;
-    if (type == 'Masuk' && (currentHour < 6 || currentHour >= 14)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '⚠️ Absen Masuk hanya bisa antara jam 06:00 sampai 12:00.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  //   final currentHour = now.hour;
+  //   if (type == 'Masuk' && (currentHour < 6 || currentHour >= 14)) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text(
+  //           '⚠️ Absen Masuk hanya bisa antara jam 06:00 sampai 12:00.',
+  //         ),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    if (type == 'Keluar' && (currentHour < 12 || currentHour >= 24)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '⚠️ Absen Keluar hanya bisa antara jam 12:00 sampai 23:59.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  //   if (type == 'Keluar' && (currentHour < 12 || currentHour >= 24)) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text(
+  //           '⚠️ Absen Keluar hanya bisa antara jam 12:00 sampai 23:59.',
+  //         ),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    if (alreadyThisType) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('⚠️ Anda sudah absen $type hari ini.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  //   if (alreadyThisType) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('⚠️ Anda sudah absen $type hari ini.'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    Attendance att = Attendance(
-      type: type,
-      date: formattedDate,
-      time: formattedTime,
-      userEmail: email!,
-    );
+  //   Attendance att = Attendance(
+  //     type: type,
+  //     date: formattedDate,
+  //     time: formattedTime,
+  //     userEmail: email!,
+  //   );
 
-    await DBHelper.insertAttendance(att);
+  //   await DBHelper.insertAttendance(att);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✅ Berhasil Absen $type pada $formattedTime'),
-        backgroundColor: Colors.green,
-      ),
-    );
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text('✅ Berhasil Absen $type pada $formattedTime'),
+  //       backgroundColor: Colors.green,
+  //     ),
+  //   );
 
-    _loadTodayAttendance();
-  }
+  //   _loadTodayAttendance();
+  // }
 
-  void _showIzinDialog(BuildContext context) {
-    TextEditingController _reasonController = TextEditingController();
+  // void _showIzinDialog(BuildContext context) {
+  //   TextEditingController _reasonController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('Ajukan Izin'),
-            content: TextField(
-              controller: _reasonController,
-              decoration: InputDecoration(hintText: 'Alasan Izin'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Batal'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  String reason = _reasonController.text.trim();
-                  if (reason.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Alasan tidak boleh kosong.')),
-                    );
-                    return;
-                  }
+  //   showDialog(
+  //     context: context,
+  //     builder:
+  //         (context) => AlertDialog(
+  //           title: Text('Ajukan Izin'),
+  //           content: TextField(
+  //             controller: _reasonController,
+  //             decoration: InputDecoration(hintText: 'Alasan Izin'),
+  //           ),
+  //           actions: [
+  //             TextButton(
+  //               onPressed: () => Navigator.pop(context),
+  //               child: Text('Batal'),
+  //             ),
+  //             TextButton(
+  //               onPressed: () async {
+  //                 String reason = _reasonController.text.trim();
+  //                 if (reason.isEmpty) {
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     SnackBar(content: Text('Alasan tidak boleh kosong.')),
+  //                   );
+  //                   return;
+  //                 }
 
-                  Navigator.pop(context); // Tutup dialog
-                  await _absenIzin(context, reason); // Lanjutkan absen izin
-                },
-                child: Text('Ajukan'),
-              ),
-            ],
-          ),
-    );
-  }
+  //                 Navigator.pop(context); // Tutup dialog
+  //                 await _absenIzin(context, reason); // Lanjutkan absen izin
+  //               },
+  //               child: Text('Ajukan'),
+  //             ),
+  //           ],
+  //         ),
+  //   );
+  // }
 
   void _logout(BuildContext context) async {
     await PrefService.logout();
@@ -419,14 +422,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.login,
                     label: 'Absen Masuk',
                     color: Colors.green,
-                    onTap: () => _absen(context, 'Masuk'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AbsenMasukLokasiScreen(),
+                        ),
+                      ).then((value) {
+                        _loadTodayAttendance(); // ✅ reload data setelah balik dari halaman absen
+                      });
+                    },
                   ),
                   _buildMenuCard(
                     context,
                     icon: Icons.logout,
-                    label: 'Absen Keluar',
+                    label: 'Absen Masuk',
                     color: Colors.orange,
-                    onTap: () => _absen(context, 'Keluar'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AbsenKeluarLokasiScreen(),
+                        ),
+                      ).then((value) {
+                        _loadTodayAttendance(); // ✅ reload data setelah balik dari halaman absen
+                      });
+                    },
                   ),
                   _buildMenuCard(
                     context,
