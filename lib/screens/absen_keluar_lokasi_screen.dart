@@ -130,8 +130,11 @@ class _AbsenKeluarLokasiScreenState extends State<AbsenKeluarLokasiScreen> {
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: ElevatedButton.icon(
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Absen Keluar Sekarang'),
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      label: const Text(
+                        'Absen Keluar Sekarang',
+                        style: TextStyle(fontSize: 13, color: Colors.white),
+                      ),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size.fromHeight(50),
                         backgroundColor:

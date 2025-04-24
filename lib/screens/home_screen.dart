@@ -1,5 +1,6 @@
 import 'package:absen_sqflite/screens/absen_keluar_lokasi_screen.dart';
 import 'package:absen_sqflite/screens/absen_masuk_lokasi_screen.dart';
+import 'package:absen_sqflite/screens/edit_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../database/db_helper.dart';
@@ -109,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String? keluar;
     bool hasIzin = false;
 
+    // looping data hasil query
     for (var item in result) {
       if (item['type'] == 'Masuk') {
         masuk = item['time']?.toString();
@@ -129,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
       status = 'Anda sudah absen Masuk hari ini.';
     }
 
+    // menjalankan update state
     setState(() {
       _absenMasukTime = masuk;
       _absenKeluarTime = keluar;
@@ -301,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         '🗓️ Absensi Hari Ini',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 19,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -311,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         'Halo, ${userName ?? "User"} 👋',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -320,7 +323,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     Center(
                       child: Text(
                         DateFormat('EEEE, dd MMMM yyyy').format(DateTime.now()),
-                        style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: const Color.fromARGB(255, 35, 35, 35),
+                        ),
                       ),
                     ),
                     SizedBox(height: 12),
@@ -328,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         _statusHarian,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: Colors.blueAccent,
                         ),
@@ -351,7 +357,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               'Masuk:',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -360,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           _absenMasukTime ?? 'Belum Absen',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 15,
                             color:
                                 _absenMasukTime != null
                                     ? Colors.black
@@ -386,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               'Keluar:',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -395,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           _absenKeluarTime ?? 'Belum Absen',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 15,
                             color:
                                 _absenKeluarTime != null
                                     ? Colors.black
@@ -436,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildMenuCard(
                     context,
                     icon: Icons.logout,
-                    label: 'Absen Masuk',
+                    label: 'Absen Keluar',
                     color: Colors.orange,
                     onTap: () {
                       Navigator.push(
@@ -460,6 +466,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         MaterialPageRoute(builder: (_) => HistoryScreen()),
                       ).then((value) {
                         _loadTodayAttendance();
+                      });
+                    },
+                  ),
+                  _buildMenuCard(
+                    context,
+                    icon: Icons.edit,
+                    label: 'Edit Profile',
+                    color: Colors.blueGrey,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => EditProfileScreen()),
+                      ).then((value) {
+                        _loadUserName(); // ini akan mengambil nama terbaru dari SharedPreferences
+                        ();
                       });
                     },
                   ),

@@ -8,9 +8,10 @@ class RegisterScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // ✅ Fungsi validasi email
   bool isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+    return RegExp(
+      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+    ).hasMatch(email); // sturuktur email menggunakan regex
   }
 
   void _register(BuildContext context) async {
@@ -18,114 +19,136 @@ class RegisterScreen extends StatelessWidget {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
 
-    // if (!isValidEmail(email)) {
-    //   ScaffoldMessenger.of(
-    //     context,
-    //   ).showSnackBar(SnackBar(content: Text('Format email tidak valid.')));
-    //   return;
-    // }
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❗ Semua field wajib diisi')),
+      );
+      return;
+    }
 
-    // if (password.length < 7) {
-    //   ScaffoldMessenger.of(
-    //     context,
-    //   ).showSnackBar(SnackBar(content: Text('Password minimal 7 karakter.')));
-    //   return;
-    // }
+    if (!isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❗ Format email tidak valid')),
+      );
+      return;
+    }
 
-    if (email.isNotEmpty && password.isNotEmpty) {
-      try {
-        await DBHelper.insertUser(
-          UserModel(name: name, email: email, password: password),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Register berhasil! Silakan login.')),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => LoginScreen()),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Email sudah terdaftar.')));
-      }
-    } else {
+    if (password.length < 7) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❗ Password minimal 7 karakter')),
+      );
+      return;
+    }
+
+    try {
+      await DBHelper.insertUser(
+        UserModel(name: name, email: email, password: password),
+      );
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Isi semua field.')));
+      ).showSnackBar(const SnackBar(content: Text('✅ Pendaftaran berhasil!')));
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => LoginScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('❗ Email sudah terdaftar')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Nama Lengkap',
-                // hintText: 'Dimas Pratama',
+      backgroundColor: Colors.grey[100],
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.app_registration, size: 64, color: Colors.green),
+              const SizedBox(height: 16),
+              const Text(
+                "Buat Akun Baru",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-            ),
-            // SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            TextButton(
-              onPressed: () async {
-                String name = nameController.text.trim();
-                String email = emailController.text.trim();
-                String password = passwordController.text.trim();
+              const SizedBox(height: 32),
 
-                if (name.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Nama tidak boleh kosong.')),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.person),
+                  labelText: 'Nama Lengkap',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.email),
+                  labelText: 'Email',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: passwordController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.lock),
+                  labelText: 'Password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => _register(context),
+                  child: const Text(
+                    "Daftar",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => LoginScreen()),
                   );
-                  return;
-                }
-
-                if (!isValidEmail(email)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Format email tidak valid.')),
-                  );
-                  return;
-                }
-
-                if (password.length < 7) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Password minimal 7 karakter.')),
-                  );
-                  return;
-                }
-
-                await DBHelper.insertUser(
-                  UserModel(name: name, email: email, password: password),
-                );
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Pendaftaran berhasil!')),
-                );
-
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => LoginScreen()),
-                );
-              },
-
-              child: Text("Daftar"),
-            ),
-          ],
+                },
+                child: const Text(
+                  "Sudah punya akun? Masuk",
+                  style: TextStyle(color: Colors.black54),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -161,7 +161,7 @@ class _AbsenMasukLokasiScreenState extends State<AbsenMasukLokasiScreen> {
                     child: Column(
                       children: [
                         Text(
-                          'Jarak ke kantor: ${distance.toStringAsFixed(2)} meter',
+                          'Jarak ke kantor: ${distance.toStringAsFixed(1)} meter',
                           style: TextStyle(
                             fontSize: 16,
                             color: isInsideRadius ? Colors.green : Colors.red,

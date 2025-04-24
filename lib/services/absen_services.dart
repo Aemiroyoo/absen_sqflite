@@ -35,18 +35,6 @@ class AbsenServices {
       return;
     }
 
-    if (currentHour < 12 || currentHour >= 24) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            '⚠️ Absen Keluar hanya bisa antara jam 12:00 PM sampai 23:59 PM.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     if (check.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('⚠️ Anda sudah absen Masuk hari inii.')),
@@ -112,6 +100,19 @@ class AbsenServices {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('⚠️ Anda belum absen Masuk. Tidak bisa absen Keluar.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final currentHour = now.hour;
+    if (currentHour < 12 || currentHour >= 24) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '⚠️ Absen Keluar hanya bisa antara jam 12:00 PM sampai 23:59 PM.',
+          ),
           backgroundColor: Colors.red,
         ),
       );

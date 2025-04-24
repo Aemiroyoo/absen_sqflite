@@ -113,6 +113,16 @@ class DBHelper {
     return null;
   }
 
+  static Future<void> updateUserName(String email, String newName) async {
+    final db = await initDb();
+    await db.update(
+      'users',
+      {'name': newName},
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+  }
+
   // Check if attendance exists
   static Future<bool> checkAttendance(String date, String type) async {
     final db = await initDb();
