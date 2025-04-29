@@ -21,6 +21,7 @@ class _AbsenMasukLokasiScreenState extends State<AbsenMasukLokasiScreen> {
   bool isInsideRadius = false;
   double distance = 0.0;
   static const double allowedRadius = 15; // dalam meter
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -29,6 +30,10 @@ class _AbsenMasukLokasiScreenState extends State<AbsenMasukLokasiScreen> {
   }
 
   Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       await Geolocator.openLocationSettings();
@@ -58,132 +63,418 @@ class _AbsenMasukLokasiScreenState extends State<AbsenMasukLokasiScreen> {
       _currentPosition = position;
       distance = jarak;
       isInsideRadius = jarak <= allowedRadius;
+      _isLoading = false;
     });
   }
-
-  // Future<void> _absenMasuk() async {
-  //   final email = await PrefService.getEmail();
-  //   final now = DateTime.now();
-  //   String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-  //   String formattedTime = DateFormat('HH:mm:ss').format(now);
-
-  //   final db = await DBHelper.initDb();
-
-  //   // ✅ CEK apakah sudah absen Masuk hari ini
-  //   final check = await db.query(
-  //     'attendance',
-  //     where: 'date = ? AND type = ? AND user_email = ?',
-  //     whereArgs: [formattedDate, 'Masuk', email],
-  //   );
-
-  //   if (check.isNotEmpty) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('⚠️ Anda sudah absen Masuk hari ini.'),
-  //         backgroundColor: Colors.orange,
-  //       ),
-  //     );
-  //     return;
-  //   }
-
-  //   Attendance att = Attendance(
-  //     type: 'Masuk',
-  //     date: formattedDate,
-  //     time: formattedTime,
-  //     userEmail: email!,
-  //   );
-
-  //   await DBHelper.insertAttendance(att);
-
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     const SnackBar(
-  //       content: Text('✅ Berhasil absen Masuk berdasarkan lokasi!'),
-  //       backgroundColor: Colors.green,
-  //     ),
-  //   );
-
-  //   Navigator.pop(context); // kembali ke Home
-  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Absen Masuk via Lokasi')),
+      appBar: AppBar(
+        title: const Text(
+          'Absen Masuk via Lokasi',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _getCurrentLocation,
+            tooltip: 'Refresh Lokasi',
+          ),
+        ],
+      ),
       body:
-          _currentPosition == null
-              ? const Center(child: CircularProgressIndicator())
+          _isLoading
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: Colors.indigo),
+                    SizedBox(height: 16),
+                    Text(
+                      'Mendapatkan lokasi...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.indigo,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              )
               : Column(
                 children: [
-                  Expanded(
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: kantorLocation,
-                        zoom: 20,
+                  // Status Bar
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color:
+                          isInsideRadius
+                              ? Colors.green.shade500
+                              : Colors.orange.shade500,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        isInsideRadius
+                            ? 'Anda berada dalam radius kantor ✅'
+                            : 'Anda berada di luar radius kantor ⚠️',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                      markers: {
-                        Marker(
-                          markerId: const MarkerId('kantor'),
-                          position: kantorLocation,
-                          infoWindow: const InfoWindow(
-                            title: 'Titik Lokasi Kantor',
-                          ),
-                          icon: BitmapDescriptor.defaultMarkerWithHue(
-                            BitmapDescriptor.hueRed,
-                          ), // kantor = merah
-                        ),
-                        Marker(
-                          markerId: const MarkerId('user'),
-                          position: LatLng(
-                            _currentPosition!.latitude,
-                            _currentPosition!.longitude,
-                          ),
-                          infoWindow: const InfoWindow(title: 'Posisi Kamu'),
-                          icon: BitmapDescriptor.defaultMarkerWithHue(
-                            BitmapDescriptor.hueAzure,
-                          ), // user = biru muda
-                        ),
-                      },
-                      circles: {
-                        Circle(
-                          circleId: const CircleId('radius'),
-                          center: kantorLocation,
-                          radius: allowedRadius, // radius dalam meter
-                          fillColor: Colors.green.withOpacity(0.3),
-                          strokeColor: Colors.green,
-                          strokeWidth: 2,
-                        ),
-                      },
-                      onMapCreated: (controller) => _mapController = controller,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Jarak ke kantor: ${distance.toStringAsFixed(1)} meter',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: isInsideRadius ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.check_circle),
-                          label: const Text('Absen Sekarang'),
-                          onPressed:
-                              isInsideRadius
-                                  ? () async {
-                                    await AbsenServices.absenMasuk(context);
-                                    if (context.mounted) Navigator.pop(context);
-                                  }
-                                  : null,
 
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(50),
+                  // Map
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        GoogleMap(
+                          initialCameraPosition: CameraPosition(
+                            target: kantorLocation,
+                            zoom: 20,
+                          ),
+                          myLocationEnabled: true,
+                          myLocationButtonEnabled: true,
+                          zoomControlsEnabled: true,
+                          mapToolbarEnabled: true,
+                          markers: {
+                            Marker(
+                              markerId: const MarkerId('kantor'),
+                              position: kantorLocation,
+                              infoWindow: const InfoWindow(
+                                title: 'Titik Lokasi Kantor',
+                                snippet: 'Area untuk absen',
+                              ),
+                              icon: BitmapDescriptor.defaultMarkerWithHue(
+                                BitmapDescriptor.hueRed,
+                              ), // kantor = merah
+                            ),
+                            Marker(
+                              markerId: const MarkerId('user'),
+                              position: LatLng(
+                                _currentPosition!.latitude,
+                                _currentPosition!.longitude,
+                              ),
+                              infoWindow: const InfoWindow(
+                                title: 'Posisi Anda',
+                                snippet: 'Lokasi Anda saat ini',
+                              ),
+                              icon: BitmapDescriptor.defaultMarkerWithHue(
+                                BitmapDescriptor.hueAzure,
+                              ), // user = biru muda
+                            ),
+                          },
+                          circles: {
+                            Circle(
+                              circleId: const CircleId('radius'),
+                              center: kantorLocation,
+                              radius: allowedRadius, // radius dalam meter
+                              fillColor: Colors.green.withOpacity(0.3),
+                              strokeColor: Colors.green,
+                              strokeWidth: 2,
+                            ),
+                          },
+                          onMapCreated:
+                              (controller) => _mapController = controller,
+                        ),
+
+                        // Legend di pojok kanan atas
+                        Positioned(
+                          top: 16,
+                          right: 16,
+                          child: Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Lokasi Kantor',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Posisi Anda',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withOpacity(0.5),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.green,
+                                          width: 1,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Area Absensi',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+
+                  // Bottom Panel
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, -2),
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Jarak ke kantor dengan indikator visual
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color:
+                                    isInsideRadius
+                                        ? Colors.green.shade100
+                                        : Colors.orange.shade100,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                isInsideRadius
+                                    ? Icons.location_on
+                                    : Icons.wrong_location,
+                                color:
+                                    isInsideRadius
+                                        ? Colors.green
+                                        : Colors.orange,
+                                size: 24,
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Jarak ke kantor:',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    '${distance.toStringAsFixed(1)} meter',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          isInsideRadius
+                                              ? Colors.green.shade700
+                                              : Colors.orange.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Indikator status
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    isInsideRadius
+                                        ? Colors.green.shade100
+                                        : Colors.orange.shade100,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color:
+                                      isInsideRadius
+                                          ? Colors.green
+                                          : Colors.orange,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                isInsideRadius ? 'Di dalam' : 'Di luar',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      isInsideRadius
+                                          ? Colors.green.shade700
+                                          : Colors.orange.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        SizedBox(height: 16),
+
+                        // Informasi absensi
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.indigo.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.indigo.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.indigo),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Radius absensi masuk adalah ${allowedRadius.toInt()} meter dari lokasi kantor.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.indigo.shade800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: 24),
+
+                        // Tombol absen
+                        SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton.icon(
+                            icon: Icon(
+                              isInsideRadius
+                                  ? Icons.check_circle
+                                  : Icons.warning_rounded,
+                              size: 24,
+                            ),
+                            label: Text(
+                              'Absen Masuk Sekarang',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed:
+                                isInsideRadius
+                                    ? () async {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+
+                                      await AbsenServices.absenMasuk(context);
+
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                      }
+                                    }
+                                    : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  isInsideRadius
+                                      ? Colors.green
+                                      : Colors.grey.shade400,
+                              foregroundColor: Colors.white,
+                              elevation: isInsideRadius ? 4 : 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        if (!isInsideRadius)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Text(
+                              'Anda harus berada dalam radius kantor untuk absen masuk',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.red.shade700,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
