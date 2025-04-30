@@ -23,7 +23,7 @@ class AbsenServices {
 
     final currentHour = now.hour;
     // Cek jam absen Masuk dan Keluar
-    if (currentHour < 6 || currentHour >= 19) {
+    if (currentHour < 6 || currentHour >= 12) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(

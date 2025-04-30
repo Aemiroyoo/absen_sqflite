@@ -15,12 +15,15 @@ class AbsenMasukLokasiScreen extends StatefulWidget {
 }
 
 class _AbsenMasukLokasiScreenState extends State<AbsenMasukLokasiScreen> {
-  GoogleMapController? _mapController;
-  Position? _currentPosition;
-  final LatLng kantorLocation = const LatLng(-6.21090, 106.812946);
-  bool isInsideRadius = false;
-  double distance = 0.0;
-  static const double allowedRadius = 15; // dalam meter
+  GoogleMapController? _mapController; //Controller Google Maps
+  Position? _currentPosition; // Lokasi GPS user saat ini
+  final LatLng kantorLocation = const LatLng(
+    -6.21090,
+    106.812946,
+  ); // Titik lokasi kantor
+  bool isInsideRadius = false; //Apakah user di dalam radius kantor?
+  double distance = 0.0; //Jarak user ke kantor
+  static const double allowedRadius = 15; // Radius area absensi dalam meter
   bool _isLoading = true;
 
   @override
@@ -195,7 +198,7 @@ class _AbsenMasukLokasiScreenState extends State<AbsenMasukLokasiScreen> {
 
                         // Legend di pojok kanan atas
                         Positioned(
-                          top: 16,
+                          top: 60,
                           right: 16,
                           child: Container(
                             padding: EdgeInsets.all(12),
